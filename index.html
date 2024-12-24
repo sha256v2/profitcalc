@@ -47,15 +47,21 @@
             gap: 10px;
         }
 
-        .mode-toggle img {
-            height: 40px;
-            width: auto;
+        .mode-toggle button {
+            background-color: var(--button-bg);
+            border: none;
+            padding: 10px 20px;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary-bg);
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
         }
 
-        .mode-toggle img:hover {
-            transform: scale(1.1);
+        .mode-toggle button:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
         }
 
         .form-group {
@@ -163,8 +169,8 @@
         <h1>Profit Calculator</h1>
 
         <div class="mode-toggle">
-            <img id="stock-mode" src="https://s3.tradingview.com/brokers/logo/160x160_LS__webull.svg" alt="Webull Logo">
-            <img id="crypto-mode" src="https://s3-symbol-logo.tradingview.com/crypto/XTVCBTC--big.svg" alt="Bitcoin Logo">
+            <button id="stock-mode">Stock</button>
+            <button id="crypto-mode">Crypto</button>
         </div>
 
         <div id="calculator-form">
@@ -285,15 +291,13 @@
             table.appendChild(headerRow);
 
             for (let profitPercent = 0.2; profitPercent <= 5; profitPercent += 0.2) {
-                const sellPrice = averagePrice * (1 + profitPercent / 100);
-                const sellPriceWithFee = sellPrice * feeMultiplier; // Apply fee for selling
-                const totalBuyCostWithFee = averagePrice * feeMultiplier; // Apply fee for buying
-                const profit = (sellPriceWithFee - totalBuyCostWithFee) * totalUnits;
+                const sellPrice = averagePrice * (1 + profitPercent / 100) * feeMultiplier;
+                const profit = (sellPrice - averagePrice * feeMultiplier) * totalUnits;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${profitPercent.toFixed(1)}%</td>
-                    <td>${sellPriceWithFee.toFixed(2)}</td>
+                    <td>${sellPrice.toFixed(2)}</td>
                     <td class="profit">${profit.toFixed(2)}</td>
                 `;
                 table.appendChild(row);
