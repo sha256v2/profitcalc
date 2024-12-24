@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profit Calculator</title>
+    <style>
+        :root {
+            --primary-bg: #181A20;
+            --secondary-bg: #181A20;
+            --text-primary: #EAECEF;
+            --text-secondary: #B7BDC6;
+            --button-hover: #F0B90B;
+            --button-bg: #FCD535;
+            --profit-positive: #0ECB81;
+            --border: #474D57;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: "BinancePlex", Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            background-color: var(--primary-bg);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .mode-toggle button {
+            background-color: var(--button-bg);
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary-bg);
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .mode-toggle button:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+        }
+
+        #extra-entry-points .form-group {
+            margin-bottom: 15px;
+        }
+
+        #extra-entry-points {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .button-group button {
+            background-color: var(--button-bg);
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary-bg);
+            border-radius: 5px;
+            margin: 5px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .button-group button:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .results table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: var(--shadow);
+            background-color: var(--primary-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .results th, .results td {
+            padding: 10px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results th {
+            background-color: var(--primary-bg);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .results tr:nth-child(even) {
+            background-color: var(--primary-bg);
+        }
+
+        .results tr:nth-child(odd) {
+            background-color: var(--primary-bg);
+        }
+
+        .results tr:hover {
+            background-color: var(--button-hover);
+            color: var(--primary-bg);
+        }
+
+        .profit {
+            color: var(--profit-positive);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Profit Calculator</h1>
+
+        <div class="mode-toggle">
+            <button id="stock-mode">Stock</button>
+            <button id="crypto-mode">Crypto</button>
+        </div>
+
+        <div id="calculator-form">
+            <div class="form-group">
+                <label for="buy-price">Buy Price</label>
+                <input type="text" id="buy-price" placeholder="Enter initial buy price">
+            </div>
+
+            <div class="form-group">
+                <label for="units">Units</label>
+                <input type="number" id="units" placeholder="Enter number of units">
+            </div>
+
+            <div class="form-group" id="crypto-fee-group" style="display: none;">
+                <label for="fee">Spot Fee (%)</label>
+                <input type="number" id="fee" placeholder="Enter spot fee">
+            </div>
+
+            <div id="extra-entry-points"></div>
+
+            <div class="button-group">
+                <button onclick="calculateProfit()">Calculate</button>
+                <button onclick="addEntryPoints()">Add Entry Points</button>
+                <button onclick="removeEntryPoints()">Remove Entry Points</button>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <!-- Profit table will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        let isCryptoMode = false;
+        let entryPointCounter = 0;
+
+        document.getElementById('stock-mode').addEventListener('click', () => {
+            isCryptoMode = false;
+            document.getElementById('crypto-fee-group').style.display = 'none';
+        });
+
+        document.getElementById('crypto-mode').addEventListener('click', () => {
+            isCryptoMode = true;
+            document.getElementById('crypto-fee-group').style.display = 'block';
+        });
+
+        function addEntryPoints() {
+            if (entryPointCounter >= 1) return; // Limit to one additional entry point set
+
+            const container = document.getElementById('extra-entry-points');
+
+            const group1 = document.createElement('div');
+            group1.className = 'form-group';
+            group1.innerHTML = `
+                <label for="additional-buy-price">Additional Buy Price</label>
+                <input type="text" class="additional-buy-price" placeholder="Enter additional buy price">
+            `;
+
+            const group2 = document.createElement('div');
+            group2.className = 'form-group';
+            group2.innerHTML = `
+                <label for="additional-units">Additional Units</label>
+                <input type="number" class="additional-units" placeholder="Enter additional units">
+            `;
+
+            container.appendChild(group1);
+            container.appendChild(group2);
+
+            entryPointCounter++;
+        }
+
+        function removeEntryPoints() {
+            if (entryPointCounter === 0) return; // Nothing to remove
+
+            const container = document.getElementById('extra-entry-points');
+            container.innerHTML = '';
+
+            entryPointCounter--;
+        }
+
+        function formatInputToNumber(input) {
+            return parseFloat(input.replace(/,/g, ''));
+        }
+
+        function calculateProfit() {
+            const buyPrice = formatInputToNumber(document.getElementById('buy-price').value);
+            const units = parseFloat(document.getElementById('units').value);
+            const feePercent = isCryptoMode ? parseFloat(document.getElementById('fee').value || 0) : 0;
+
+            let totalCost = buyPrice * units;
+            let totalUnits = units;
+
+            if (entryPointCounter > 0) {
+                const additionalBuyPrice = formatInputToNumber(document.querySelector('.additional-buy-price').value || 0);
+                const additionalUnits = parseFloat(document.querySelector('.additional-units').value || 0);
+
+                if (!isNaN(additionalBuyPrice) && !isNaN(additionalUnits)) {
+                    totalCost += additionalBuyPrice * additionalUnits;
+                    totalUnits += additionalUnits;
+                }
+            }
+
+            const averagePrice = totalCost / totalUnits;
+            const feeMultiplier = 1 + feePercent / 100;
+
+            if (isNaN(buyPrice) || isNaN(units)) {
+                alert('Please enter valid values for buy price and units.');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            const table = document.createElement('table');
+
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = '<th>Profit %</th><th>Sell Price</th><th>Profit ($)</th>';
+            table.appendChild(headerRow);
+
+            for (let profitPercent = 0.2; profitPercent <= 5; profitPercent += 0.2) {
+                const sellPrice = averagePrice * (1 + profitPercent / 100) * feeMultiplier;
+                const profit = (sellPrice - averagePrice * feeMultiplier) * totalUnits;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${profitPercent.toFixed(1)}%</td>
+                    <td>${sellPrice.toFixed(2)}</td>
+                    <td class="profit">${profit.toFixed(2)}</td>
+                `;
+                table.appendChild(row);
+            }
+
+            resultsDiv.appendChild(table);
+        }
+    </script>
+</body>
+</html>
