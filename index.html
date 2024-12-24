@@ -66,17 +66,18 @@
 
         .form-group {
             margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
         .form-group label {
-            display: block;
-            margin-bottom: 5px;
             color: var(--text-secondary);
             font-weight: 600;
         }
 
         .form-group input {
-            width: 100%;
+            width: calc(100% - 20px);
             padding: 10px;
             font-size: 16px;
             border: 1px solid var(--border);
@@ -85,11 +86,10 @@
             color: var(--text-primary);
         }
 
-        #extra-entry-points .form-group {
-            margin-bottom: 15px;
-        }
-
         #extra-entry-points {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
             margin-top: 20px;
             padding: 10px;
             border: 1px solid var(--border);
