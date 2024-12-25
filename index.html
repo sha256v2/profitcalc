@@ -86,6 +86,22 @@
             color: var(--text-primary);
         }
 
+        #crypto-fee-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #spot-fee-dropdown {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+        }
+
         #extra-entry-points {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -94,6 +110,10 @@
             padding: 10px;
             border: 1px solid var(--border);
             border-radius: 8px;
+        }
+
+        #extra-entry-points:empty {
+            display: none;
         }
 
         .button-group {
@@ -218,7 +238,7 @@
 
         document.getElementById('crypto-mode').addEventListener('click', () => {
             isCryptoMode = true;
-            document.getElementById('crypto-fee-group').style.display = 'block';
+            document.getElementById('crypto-fee-group').style.display = 'flex';
         });
 
         function addEntryPoints() {
