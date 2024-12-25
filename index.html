@@ -116,6 +116,12 @@
             display: none;
         }
 
+        #extra-short-fields {
+            display: none;
+            margin-top: 20px;
+            gap: 15px;
+        }
+
         .button-group {
             display: flex;
             justify-content: space-between;
@@ -213,6 +219,22 @@
                 </select>
             </div>
 
+            <div class="mode-toggle" id="crypto-options" style="display: none;">
+                <button id="long-mode">Long</button>
+                <button id="short-mode">Short</button>
+            </div>
+
+            <div id="extra-short-fields">
+                <div class="form-group">
+                    <label for="daily-interest">Daily Interest (%)</label>
+                    <input type="number" id="daily-interest" placeholder="Enter daily interest">
+                </div>
+                <div class="form-group">
+                    <label for="duration">Duration</label>
+                    <input type="text" id="duration" placeholder="e.g., 1d, 1.5d, 1w">
+                </div>
+            </div>
+
             <div id="extra-entry-points"></div>
 
             <div class="button-group">
@@ -229,16 +251,31 @@
 
     <script>
         let isCryptoMode = false;
+        let isShortMode = false;
         let entryPointCounter = 0;
 
         document.getElementById('stock-mode').addEventListener('click', () => {
             isCryptoMode = false;
+            isShortMode = false;
             document.getElementById('crypto-fee-group').style.display = 'none';
+            document.getElementById('crypto-options').style.display = 'none';
+            document.getElementById('extra-short-fields').style.display = 'none';
         });
 
         document.getElementById('crypto-mode').addEventListener('click', () => {
             isCryptoMode = true;
             document.getElementById('crypto-fee-group').style.display = 'flex';
+            document.getElementById('crypto-options').style.display = 'flex';
+        });
+
+        document.getElementById('long-mode').addEventListener('click', () => {
+            isShortMode = false;
+            document.getElementById('extra-short-fields').style.display = 'none';
+        });
+
+        document.getElementById('short-mode').addEventListener('click', () => {
+            isShortMode = true;
+            document.getElementById('extra-short-fields').style.display = 'flex';
         });
 
         function addEntryPoints() {
@@ -311,8 +348,33 @@
             table.appendChild(headerRow);
 
             for (let profitPercent = 0.2; profitPercent <= 5; profitPercent += 0.2) {
-                const sellPrice = averagePrice * (1 + profitPercent / 100) * feeMultiplier;
-                const profit = (sellPrice - averagePrice * feeMultiplier) * totalUnits;
+                let sellPrice = averagePrice * (1 + profitPercent / 100) * feeMultiplier;
+                let profit = (sellPrice - averagePrice * feeMultiplier) * totalUnits;
+
+                if (isCryptoMode && isShortMode) {
+                    const dailyInterest = parseFloat(document.getElementById('daily-interest').value || 0);
+                    const duration = document.getElementById('duration').value;
+
+                    const durationMultiplier = {
+                        'd': 1,
+                        'h': 1 / 24,
+                        'm': 1 / (24 * 60),
+                        's': 1 / (24 * 60 * 60),
+                        'w': 7
+                    };
+
+                    const match = duration.match(/([0-9.]+)([dhmsw])/);
+                    if (match) {
+                        const time = parseFloat(match[1]);
+                        const unit = match[2];
+                        const effectiveDays = time * (durationMultiplier[unit] || 0);
+                        const interestOwed = effectiveDays * dailyInterest / 100 * totalCost;
+                        profit -= interestOwed;
+                    } else {
+                        alert('Invalid duration format!');
+                        return;
+                    }
+                }
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
