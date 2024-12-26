@@ -162,6 +162,7 @@
             margin-left: 10px;
             font-weight: bold;
             color: var(--text-secondary);
+            transition: opacity 0.3s;
         }
 
         .button-group {
@@ -311,9 +312,19 @@
         });
 
         const toggleSwitch = document.getElementById('long-short-toggle');
+        const toggleLabel = document.querySelector('.toggle-label');
+
         toggleSwitch.addEventListener('click', () => {
             isShortMode = !isShortMode;
             toggleSwitch.classList.toggle('active');
+
+            // Update label dynamically with animation
+            toggleLabel.style.opacity = 0;
+            setTimeout(() => {
+                toggleLabel.textContent = isShortMode ? 'Short' : 'Long';
+                toggleLabel.style.opacity = 1;
+            }, 300);
+
             document.getElementById('extra-short-fields').style.display = isShortMode ? 'flex' : 'none';
         });
 
@@ -414,6 +425,9 @@
                         return;
                     }
                 }
+
+                // Ensure profit does not show negative values due to interest
+                profit = Math.max(profit, 0);
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
