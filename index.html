@@ -398,9 +398,7 @@
             table.appendChild(headerRow);
 
             for (let profitPercent = 0.2; profitPercent <= 5; profitPercent += 0.2) {
-                let targetPrice = averagePrice * (isShortMode ? (1 - profitPercent / 100) : (1 + profitPercent / 100)) * feeMultiplier;
-                let profit = (isShortMode ? (averagePrice - targetPrice) : (targetPrice - averagePrice)) * totalUnits;
-
+                let adjustedBuyPrice = averagePrice;
                 if (isCryptoMode && isShortMode) {
                     const dailyInterest = parseFloat(document.getElementById('daily-interest').value || 0);
                     const duration = document.getElementById('duration').value;
@@ -419,14 +417,16 @@
                         const unit = match[2];
                         const effectiveDays = time * (durationMultiplier[unit] || 0);
                         const interestOwed = effectiveDays * dailyInterest / 100 * totalCost;
-                        profit -= interestOwed;
+                        adjustedBuyPrice += interestOwed / totalUnits;
                     } else {
                         alert('Invalid duration format!');
                         return;
                     }
                 }
 
-                // Ensure profit does not show negative values due to interest
+                let targetPrice = adjustedBuyPrice * (isShortMode ? (1 - profitPercent / 100) : (1 + profitPercent / 100)) * feeMultiplier;
+                let profit = (isShortMode ? (adjustedBuyPrice - targetPrice) : (targetPrice - adjustedBuyPrice)) * totalUnits;
+
                 profit = Math.max(profit, 0);
 
                 const row = document.createElement('tr');
