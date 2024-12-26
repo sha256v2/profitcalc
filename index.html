@@ -244,8 +244,8 @@
 
         <div id="calculator-form">
             <div class="form-group">
-                <label for="sell-price">Sell Price</label>
-                <input type="text" id="sell-price" placeholder="Enter initial sell price">
+                <label id="price-label" for="entry-price">Buy Price</label>
+                <input type="text" id="entry-price" placeholder="Enter initial price">
             </div>
 
             <div class="form-group">
@@ -299,6 +299,7 @@
         document.getElementById('stock-mode').addEventListener('click', () => {
             isCryptoMode = false;
             isShortMode = false;
+            document.getElementById('price-label').textContent = "Buy Price";
             document.getElementById('crypto-fee-group').style.display = 'none';
             document.getElementById('crypto-options').style.display = 'none';
             document.getElementById('extra-short-fields').style.display = 'none';
@@ -306,6 +307,7 @@
 
         document.getElementById('crypto-mode').addEventListener('click', () => {
             isCryptoMode = true;
+            document.getElementById('price-label').textContent = isShortMode ? "Sell Price" : "Buy Price";
             document.getElementById('crypto-fee-group').style.display = 'flex';
             document.getElementById('crypto-options').style.display = 'flex';
         });
@@ -317,39 +319,46 @@
             isShortMode = !isShortMode;
             toggleSwitch.classList.toggle('active');
 
+            document.getElementById('price-label').textContent = isShortMode ? "Sell Price" : "Buy Price";
             toggleLabel.textContent = isShortMode ? 'Short' : 'Long';
             document.getElementById('extra-short-fields').style.display = isShortMode ? 'flex' : 'none';
         });
 
         function calculateProfit() {
-            const sellPrice = parseFloat(document.getElementById('sell-price').value);
+            const entryPrice = parseFloat(document.getElementById('entry-price').value);
             const units = parseFloat(document.getElementById('units').value);
             const feePercent = isCryptoMode ? parseFloat(document.getElementById('spot-fee-dropdown').value || 0) / 100 : 0;
-            const dailyInterest = parseFloat(document.getElementById('daily-interest').value || 0) / 100;
-            const duration = document.getElementById('duration').value;
+            const dailyInterest = isShortMode ? parseFloat(document.getElementById('daily-interest').value || 0) / 100 : 0;
+            const duration = isShortMode ? document.getElementById('duration').value : null;
 
             const durationMultipliers = { d: 1, h: 1 / 24, m: 1 / (24 * 60), s: 1 / (24 * 60 * 60), w: 7 };
-
-            const match = duration.match(/([0-9.]+)([dhmsw])/);
+            const match = duration?.match(/([0-9.]+)([dhmsw])/);
             const effectiveDays = match ? parseFloat(match[1]) * (durationMultipliers[match[2]] || 0) : 0;
-            const interestCost = effectiveDays * dailyInterest * (sellPrice * units);
+            const interestCost = isShortMode ? effectiveDays * dailyInterest * (entryPrice * units) : 0;
 
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
 
             const table = document.createElement('table');
             const headerRow = document.createElement('tr');
-            headerRow.innerHTML = '<th>Profit %</th><th>Buy Price</th><th>Profit ($)</th>';
+            headerRow.innerHTML = isShortMode
+                ? '<th>Profit %</th><th>Buy Price</th><th>Profit ($)</th>'
+                : '<th>Profit %</th><th>Sell Price</th><th>Profit ($)</th>';
             table.appendChild(headerRow);
 
             for (let profitPercent = 0.2; profitPercent <= 5; profitPercent += 0.2) {
-                const buyPrice = (sellPrice - ((profitPercent / 100) * sellPrice) - (feePercent * sellPrice) - (interestCost / units)) / (1 + feePercent);
-                const profit = (sellPrice - buyPrice - (feePercent * sellPrice) - (feePercent * buyPrice)) * units - interestCost;
+                const targetPrice = isShortMode
+                    ? (entryPrice - ((profitPercent / 100) * entryPrice) - (feePercent * entryPrice) - (interestCost / units)) / (1 + feePercent)
+                    : entryPrice * (1 + profitPercent / 100) * (1 + feePercent);
+
+                const profit = isShortMode
+                    ? (entryPrice - targetPrice - (feePercent * entryPrice) - (feePercent * targetPrice)) * units - interestCost
+                    : (targetPrice - entryPrice * (1 + feePercent)) * units;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${profitPercent.toFixed(1)}%</td>
-                    <td>${buyPrice.toFixed(2)}</td>
+                    <td>${targetPrice.toFixed(2)}</td>
                     <td class="profit">${profit.toFixed(2)}</td>
                 `;
                 table.appendChild(row);
